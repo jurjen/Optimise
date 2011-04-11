@@ -60,6 +60,7 @@ llhead* ll_new(int bin);												// Create header for new bin linked list
 void ll_add(int nx, int ny, int ref, int rx, int ry, llhead* list);		// Add node to linked list
 void ll_free(llhead* llh);												// Free all memory used by linked list
 
+int CheckPlace2D(int n, int **w, int *W, int **x, int *b, int item, llint *posn, int bin);
 int CheckPlace(llint *posn, int *W, int **w, int n, llhead *bin, int N, int *b, int **x);// Check placement in bin
 
 /* TEMPLATES: */

@@ -887,6 +887,66 @@ void ll_free(llhead* llh)
  *     Overlap -> posn->p[],w[][n] vs pc[],w[][]
  *     Touching perimeter -> score += touching overlap
  */
+ int CheckPlace2D(int n, int **w, int *W, int **x, int *b, int item, llint *posn, int bin)
+ {
+    int i, score;
+    int px1, px2, py1, py2;
+    int bx1, bx2, by1, by2;
+    
+    px1 = posn->x;
+    px2 = posn->x + w[0][item];
+    py1 = posn->y;
+    py2 = posn->y + w[1][item];
+    
+    // check for out-of-bounds
+    if ((px2 > W[0]) || (py2 > W[1])) return -1;
+    
+    // Calculate initial perimeter score
+    score = 0;
+    if (px1 == 0) score += w[1][item];              // up against left edge
+    if (py1 == 0) score += w[0][item];              // up against bottom edge
+    if (px2 == W[0]) score += w[1][item];           // up against right edge
+    if (py2 == W[1]) score += w[0][item];           // up against top edge
+    
+    // Cycle through all items in bin, check for overlap 
+    // then add length of any touching edges to score
+    for (i = 0; i < n; i++) {
+        if (b[i] != bin) continue;                  // not in the same bin
+        if (i == item) continue;                    // don't check against self
+        
+        bx1 = x[0][i];
+        bx2 = x[0][i] + w[0][i];
+        by1 = x[1][i];
+        by2 = x[1][i] + w[1][i];
+        
+        if (bx2 < px1) continue;                    // no overlap possible
+        if (px2 < bx1) continue;
+        if (by2 < py1) continue;
+        if (py2 < by1) continue;
+        
+        if ((bx2 == px1) || (bx1 == px2)) {         // y edges touching
+            if (by1 < py1) {
+                score += (by2 < py2) ? (by2 - py1) : (py2 - py1);
+            } else {
+                score += (py2 < by2) ? (by2 - by1) : (py2 - by1);
+            }
+        } else if ((by2 == py1) || (by1 == py2)) {  // x edges touching
+            if (bx1 < px1) { 
+                score += (bx2 < px2) ? (bx2 - px1) : (px2 - px1);
+            } else {
+                score += (px2 < bx2) ? (bx2 - bx1) : (px2 - bx1);
+            }
+        } else {
+            // bx2 > px1 and bx1 < px2
+            // by2 > py1 and by1 < py2
+            return -1;
+        }
+    }
+    
+    return score;
+ }
+ 
+ 
 int CheckPlace(llint *posn, int *W, int **w, int n, llhead *bin, 
                      int N, int *b, int **x)
 {
@@ -1160,7 +1220,8 @@ int HtouchPerim(int  n, int **w, int *W, int **x, int *b, int maxb)
 			/* Check each normal position in bin */
 			while (posn != NULL) {
 				// check horizontal score
-				score[1] = CheckPlace(posn, W, w, order[i], curr, n, b, x);
+				//score[1] = CheckPlace(posn, W, w, order[i], curr, n, b, x);
+                score[1] = CheckPlace2D(n, w, W, x, b, order[i], posn, j);
 				if (score[1] > score[0]) {
 					best = j;
 					bestx = posn->x;
@@ -1176,7 +1237,8 @@ int HtouchPerim(int  n, int **w, int *W, int **x, int *b, int maxb)
 				l = w[1][order[i]];
 				w[1][order[i]] = w[0][order[i]];
 				w[0][order[i]] = l;
-				score[2] = CheckPlace(posn, W, w, order[i], curr, n, b, x);
+				//score[2] = CheckPlace(posn, W, w, order[i], curr, n, b, x);
+                score[2] = CheckPlace2D(n, w, W, x, b, order[i], posn, j);
 				if (score[2] > score[0]) {
 					best = j;
 					bestx = posn->x;
@@ -1192,10 +1254,13 @@ int HtouchPerim(int  n, int **w, int *W, int **x, int *b, int maxb)
 					w[1][order[i]] = w[0][order[i]];	// horizontal position in case of tied 
 					w[0][order[i]] = l;					// scores.
 				}
-
 				posn = posn->next;						// goto next normal position
 			}
-			if (curr->next != NULL) curr = curr->next;	// goto next bin's normals
+			if (curr->next != NULL) {
+                curr = curr->next;	// goto next bin's normals
+            } else {
+                j = bins + 1;       // need to exit this loop normally
+            }
 		}
 
 		if (score[0] == 0) {
