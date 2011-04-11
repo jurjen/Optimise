@@ -40,9 +40,6 @@ int main(int argc, char **argv)
             sscanf(argv[3], "%s", resultsFile);
             if (argc > 4) {
                sscanf(argv[4], "%d", &timeLimit);
-                if (argc > 5) {
-                   sscanf(argv[5], "%i", &iterLimit);
-                }       
             }       
         }
     }
@@ -102,6 +99,12 @@ int main(int argc, char **argv)
             }
         }
         fclose(file);
+    }
+
+    if (argc > 5) {
+       sscanf(argv[5], "%i", &iterLimit);
+    } else {
+       if (n > 50) iterLimit = 6.0 * (float) n;
     }
 	
     printf("\n Solving %dD problem with %d pieces...\n",d, n);
