@@ -6,7 +6,7 @@
 #include <time.h>
 #include <assert.h>
 
-#define DEBUG      1
+#define DEBUG      0
 
 #define CHECK      1
 
@@ -66,7 +66,7 @@ int CheckPlace(llint *posn, int *W, int **w, int n, llhead *bin, int N, int *b, 
 /* TEMPLATES: */
 
 /* a) core procedures: */
-int TSpack(int d, int n, int **w, int *W, int lb, float TL, int *ub0, int **x, int *b, int uheur);
+int TSpack(int d, int n, int **w, int *W, int lb, float TL, int *ub0, int **x, int *b, int uheur, int maxIter);
 int search(int t, int *K, int *dv,
            int nb, int d, int n, int **w, int *W, int **x, int *b, double *ff, float timeLeft, int uheur);
 

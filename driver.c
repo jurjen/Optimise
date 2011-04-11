@@ -5,7 +5,9 @@ int main(int argc, char **argv)
 {                                           /* driver program for the TSPACK code */
 	int    i, j, value, correct;
 	int    d, n, lb, ub0, ub;
+	float  yield;
 	float  timeLimit;
+	int    iterLimit;
 	char   fname[80];
 	char   resultsFile[80];
 	int    uh;
@@ -17,7 +19,7 @@ int main(int argc, char **argv)
 	char   *textline;
 
 	if (argc < 2) {
-	   printf("\n Usage: %s fileName [rotation] [outfile] [timelimit]\n",argv[0]);
+	   printf("\n Usage: %s fileName [rotation] [outfile] [timelimit] [iterLimit]\n",argv[0]);
 	   printf("\n\n");
 	   printf("File structure:\n");
 	   printf("===============\n");
@@ -29,6 +31,7 @@ int main(int argc, char **argv)
 
 	sscanf(argv[1], "%s", fname);
     timeLimit = 300;
+    iterLimit = nITmax;
 	if (argc < 3) {
         printf("\n Allowing part rotation\n");
     } else {
@@ -37,6 +40,9 @@ int main(int argc, char **argv)
             sscanf(argv[3], "%s", resultsFile);
             if (argc > 4) {
                sscanf(argv[4], "%d", &timeLimit);
+                if (argc > 5) {
+                   sscanf(argv[5], "%i", &iterLimit);
+                }       
             }       
         }
     }
@@ -105,7 +111,7 @@ int main(int argc, char **argv)
     printf(" OK, lower bound is %d bins of %d x %d\n", lb, W[0], W[1]);
 
 	/* compute the TS solution */
-	ub = TSpack(d, n, w, W, lb, timeLimit, &ub0, x, b, uh);
+	ub = TSpack(d, n, w, W, lb, timeLimit, &ub0, x, b, uh, iterLimit);
 	if (ub <= 0) {
 	   printf("\n an error occurred in procedure TSpack!\n");
 	   exit(0);
@@ -126,13 +132,25 @@ int main(int argc, char **argv)
     if (argc > 3) {
         file = fopen(resultsFile, "w");
         fprintf(file, "%d sheets of %d x %d required\n", ub, W[0], W[1]);
+        timeLimit = 0;
         for (i = 0; i < ub; i++) {
             fprintf(file, "\n\nLAYOUT: %03d\n===========\n", i + 1);
+            yield = 0;
+            value = 0;
             for (j = 0; j < n; j++) {
-                if (b[j] == i) fprintf(file, "  part: %6d, x: %6d, y: %6d, px: %6d, py: %6d, id: %s\n", 
+                if (b[j] == i) {
+                   fprintf(file, "  part: %6d, x: %6d, y: %6d, px: %6d, py: %6d, id: %s\n", 
                                           j + 1, x[0][j], x[1][j], w[0][j], w[1][j], id[j]);
+                   yield = yield + ((float) w[0][j]) * ((float) w[1][j]);
+                   value++;
+                }
             }
+            yield = yield * 100 / (((float) W[0]) * ((float) W[1]));
+            timeLimit += yield;
+            fprintf(file, "\n %i items, YIELD: %2.2f%\n", value, yield);
         }
+        timeLimit = timeLimit / (float) ub;
+        fprintf(file, "\n\n=====\nTOTAL %d pieces on %d sheets, average yield %2.2f\n", n, ub, timeLimit);
         fclose(file);
     } else {
         file = fopen(fname, "a");

@@ -40,7 +40,7 @@
 	\param [out] b		Array containing the bin used for each item
  */
 int TSpack(int d,    int n,   int **w, int *W, int lb, float TL,
-	int *ub0, int **x, int *b, int uheur)
+	int *ub0, int **x, int *b, int uheur, int maxIter)
 	{
 	int    nCC = 0;
 	int    nb, i, j, toReturn;
@@ -123,21 +123,19 @@ int TSpack(int d,    int n,   int **w, int *W, int lb, float TL,
 	second(&st);
 	/* external loop */
 	D = 1; tt = 0.0;
-	while ((tt < TL) && (nIT < nITmax)) {
+	while ((tt < TL) && (nIT < maxIter)) {
 	      dv = 0; K = 1;
 
 	      fllf(d, n, n, cw, cb, cnb, W, ff);
 	      t = target(D, ff, cnb);
 
 	      /* internal loop */
-	      while (!dv && (nb > lb) && (K < cnb) && (tt < TL) && (nIT < nITmax)) {
+	      while (!dv && (nb > lb) && (K < cnb) && (tt < TL) && (nIT < maxIter)) {
 	            int Kin = K, _cnb = cnb, flagNewTarget = 0;
 
 	            nIT++;
-	            printf(" %3d bins        \b\b\b\b\b\b\b\b", nb );
-	            printf("%6d\b\b\b\b\b\b", K);
+	            printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b %3d bins (%5d)", nb, nIT);
 	            cnb = search(t, &K, &dv, cnb, d, n, cw, W, cx, cb, ff, TL-tt, uheur);
-                printf(" (%5d)\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b", nIT);
                 
 	            if (CHECK) {
 	               int correct;
@@ -248,7 +246,7 @@ int TSpack(int d,    int n,   int **w, int *W, int lb, float TL,
 	      }
 
 	      /* diversification */
-	      if ((nb == lb) || (tt > TL) || (nIT == nITmax)) break;
+	      if ((nb == lb) || (tt > TL) || (nIT == maxIter)) break;
 	      else {
 	         if ((D < Dmax) && (D < cnb)) {
 	            D++;
