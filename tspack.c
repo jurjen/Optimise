@@ -956,7 +956,6 @@ void CheckNormals2D(llhead *bin, int *W, int **w, int *b, int **x, int n) {
          
          // Check within bin
          if ((px >= W[0]) || (py >= W[1])) {
-printf("posn %5d,%5d out of bounds\n", px, py);
              freeme = 1;
          }
          
@@ -971,14 +970,12 @@ printf("posn %5d,%5d out of bounds\n", px, py);
                  // remove if bx1 <= px < bx2 AND by1 <= py < by2
                  if ((bx1 <= px) && (px < bx2) && (by1 <= py) && (py < by2)) {
                      freeme = 1;
-printf("posn %5d,%5d clash with item %3d at %5d,%5d-%5d,%5d\n", px, py, i, bx1, by1, bx2, by2);
                      break;
                  }
              }
          }
 
          if (freeme == 1) {
-printf("removing %5d,%5d from normals in bin %3d\n", px, py, bin->bin);
              if (prev == NULL) {
                  bin->normals = bin->normals->next;
                  free(posn);
