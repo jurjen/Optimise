@@ -918,21 +918,21 @@ void ll_free(llhead* llh)
         by2 = x[1][i] + w[1][i];
         
         if (bx2 < px1) continue;                    // no overlap possible
-        if (px2 < bx1) continue;
         if (by2 < py1) continue;
+        if (px2 < bx1) continue;
         if (py2 < by1) continue;
         
         if ((bx2 == px1) || (bx1 == px2)) {         // y edges touching
             if (by1 < py1) {
-                score += (by2 < py2) ? (by2 - py1) : (py2 - py1);
+                score += (by2 < py2) ? (by2 - py1) : w[1][item];  // (py2 - py1);
             } else {
-                score += (py2 < by2) ? (by2 - by1) : (py2 - by1);
+                score += (py2 < by2) ? w[1][i]     : (py2 - by1); // (by2 - by1);
             }
         } else if ((by2 == py1) || (by1 == py2)) {  // x edges touching
             if (bx1 < px1) { 
-                score += (bx2 < px2) ? (bx2 - px1) : (px2 - px1);
+                score += (bx2 < px2) ? (bx2 - px1) : w[0][item];  // (px2 - px1);
             } else {
-                score += (px2 < bx2) ? (bx2 - bx1) : (px2 - bx1);
+                score += (px2 < bx2) ? w[0][i]     : (px2 - bx1); // (bx2 - bx1);
             }
         } else {
             // bx2 > px1 and bx1 < px2
