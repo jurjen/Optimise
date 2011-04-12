@@ -956,6 +956,7 @@ void CheckNormals2D(llhead *bin, int *W, int **w, int *b, int **x, int n) {
      while (posn != NULL) {
          px = posn->x;
          py = posn->y;
+         freeme = 0;
          
          // Check within bin
          if ((px >= W[0]) || (py >= W[1])) {
@@ -991,7 +992,6 @@ printf("removing %5d,%5d from normals in bin %3d\n", px, py, bin->bin);
                  free(posn);
                  posn = prev->next;
              }
-             freeme = 0;
          } else {
              prev = posn;   
              posn = posn->next;
@@ -1198,8 +1198,8 @@ int HtouchPerim(int  n, int **w, int *W, int **x, int *b, int maxb)
 			// add new normal on top
 			ll_add(bestx, besty + bestwy, order[i], bestx, besty, curr);
 			// need to check normals to eliminate duds
-			CheckNormals(curr, W, w);
-			//CheckNormals2D(curr, W, w, b, x, n);
+			//CheckNormals(curr, W, w);
+			CheckNormals2D(curr, W, w, b, x, n);
 		}
 	}
 
