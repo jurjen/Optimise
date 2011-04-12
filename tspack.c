@@ -935,178 +935,61 @@ void ll_free(llhead* llh)
                 score += (px2 < bx2) ? w[0][i]     : (px2 - bx1); // (bx2 - bx1);
             }
         } else {
-            // bx2 > px1 and bx1 < px2
-            // by2 > py1 and by1 < py2
             return -1;
         }
     }
-    
     return score;
  }
  
  
-int CheckPlace(llint *posn, int *W, int **w, int n, llhead *bin, 
-                     int N, int *b, int **x)
-{
-	int score;
-	llint *binNormal;
-	int binItem;
-	int *pieces;
-	int pc, i;
-	long bx1, bx2, by1, by2;
-	long px1, px2, py1, py2;
+void CheckNormals2D(llhead *bin, int *W, int **w, int *b, int **x, int n) {
+     llint *posn, *prev;
+     int i, freeme;
+     int px, py, bx1, bx2, by1, by2;
+     
+     posn = bin->normals;
+     prev = NULL;
+     
+     while (posn != NULL) {
+         px = posn->x;
+         py = posn->y;
+         
+         // Check within bin
+         if ((px >= W[0]) || (py >= W[1])) freeme = 1;
+         
+         // Check against pieces in bin
+         for (i = 0; i < n; i++) {
+             if (b[i] == bin->bin) {
+                 bx1 = x[0][i];
+                 bx2 = x[0][i] + w[0][i];
+                 by1 = x[1][i];
+                 by2 = x[1][i] + w[1][i];
+                 
+                 // remove if bx1 <= px < bx2 AND by1 <= py < by2
+                 if ((bx1 <= px) && (px < bx2) && (by1 <= py) && (py < by2)) {
+                     freeme = 1;
+                     break;
+                 }
+             }
+         }
 
-	pieces = (int*) calloc(bin->count, sizeof(int));
-	for (i = 0; i < bin->count; i++) pieces[i] = -1;
-	pc = 0;
-	score = 0;
-
-	// check if it fits in the bin
-	if ((posn->x + w[0][n] > W[0]) || (posn->y + w[1][n] > W[1])) {
-        free(pieces);
-        return -1;
-    }
-    
- 	// Check touching perimeter
-	if (posn->x == 0) score += w[1][n];					// up against left side
-	if (posn->y == 0) score += w[0][n];					// up against bottom
-	if ((posn->x + w[0][n]) == W[0]) score += w[1][n];	// up against right side
-	if ((posn->y + w[1][n]) == W[1]) score += w[0][n];	// up against top
-
-
-	// check touching edges of other items
-	// Start by getting all the items in the bin
-	pc = 0;
-	for (i = 0; i < N; i++) {
-        if (b[i] == bin->bin) pieces[pc++] = i;
-        if (pc > bin->count) {
-               if (bin->bin > 0) {
-                  printf(" ERROR! Bin %d should have %d items, found %d\n", bin->bin, bin->count, pc);
-                  score = -1;
-               }
-               goto returning;
-        }
-    }
-
-    if (pc == 0) goto returning;
-    for (i = 0; i < pc; i++) {
-        binItem = pieces[i];
-        bx1 = (long) x[0][binItem]; //binNormal->px;
-        bx2 = (long) x[0][binItem] + (long) w[0][binItem]; //binNormal->px + (long) w[0][binItem];
-        by1 = (long) x[1][binItem]; //binNormal->py;
-        by2 = (long) x[1][binItem] + (long) w[1][binItem]; //binNormal->py + (long) w[1][binItem];
-
-        px1 = (long) posn->x;
-        px2 = (long) posn->x + (long) w[0][n];
-        py1 = (long) posn->y;
-        py2 = (long) posn->y + (long) w[1][n];
-		
-		if (by1 == py1) {							// item bottoms are aligned
-			if (bx2 == px1) {
-				score += (w[1][binItem] > w[1][n]) ? w[1][n] : w[1][binItem];	// item is to the left
-			} else if (bx1 == px2) {
-				score += (w[1][binItem] > w[1][n]) ? w[1][n] : w[1][binItem];	// item is to the right
-			} else if (((bx2 > px1) && (bx1 < px2)) || ((px2 > bx1) && (px1 < bx2))) {
-                score = -1;    
-                goto returning;  // inside each other
-            }
-			goto nextNormal;
-		} 
-
-		if (bx1 == px1) {							// item left sides are aligned
-			if (by2 == py1) {
-				score += (w[0][binItem] > w[0][n]) ? w[0][n] : w[0][binItem];	// item is below
-			} else if (by1 == py2) {
-				score += (w[0][binItem] > w[0][n]) ? w[0][n] : w[0][binItem];	// item is above
-			} else if (((by2 > py1) && (by1 < py2)) || ((py2 > by1) && (py1 < by2))) {
-                score = -1;    
-                goto returning;  // inside each other
-            } 
-			goto nextNormal;
-		}
-
-        // check for overlap
-        if ((bx1 < px2) && (px1 < bx2))	{
-           if ((by1 < py2) && (py1 < by2)) {
-                score = -1;    
-                goto returning;  // overlap
-           }
-        }
-
-		// item starts to the left of rh edge
-		if (bx1 < px2) {	
-			if (bx2 > px1 ) {							    // overlap in length
-				if (by1 < py1) {
-					if (by2 == py1) {					    // directly beneath
-						if (bx1 < px1) {
-                            score += (bx2 < px2) ? (int) (bx2 - px1) : w[0][n];
-						} else {
-                            score += (bx2 > px2) ? (int) (px2 - bx1) : w[0][binItem];   
-						}
-					}
-				} else {
-					// piece is above current position
-					if (by1 == py2) {						// directly above
-						if (bx1 < px1) {
-							if (bx2 < px2)	
-								score += (bx2 - px1);	    // overlaps completely
-							else
-								score += w[0][n];			// overlaps from left
-						} else {
-							if (bx2 > px2)
-								score += (px2 - bx1);		// overlaps from right
-							else
-								score += w[0][binItem];		// touches between left and right edges
-						}
-					}
-				}
-			}
-		} 
-
-		// item starts below the top edge
-		if (by1 < py2) {
-			if (by2 > py1) {							// overlap in height
-				if (bx1 < px1) {
-					if (bx2 == px1) {					// directly to the left
-						if (by1 < py1) {
-							if (by2 < py2)	
-								score += (by2 - py1);	// overlaps completely
-							else
-								score += w[1][n];		// overlaps from bottom
-						} else {
-							if (by2 > py2)
-								score += (py2 - by1);	// overlaps from top
-							else
-								score += w[1][binItem];	// touches between top and bottom edges
-						}
-					}
-				} else {
-					// piece is above current position
-					if (bx1 == px2) {					// directly to the right
-						if (by1 < py1) {
-							if (by2 < py2)	
-								score += (by2 - py1);	// overlaps completely
-							else
-								score += w[1][n];		// overlaps from bottom
-						} else {
-							if (by2 > py2)
-								score += (py2 - by1);	// overlaps from top
-							else
-								score += w[1][binItem];	// touches between top and bottom edges
-						}
-					}
-				}
-			}
-		}
-
-nextNormal:
-     ;
-	}
-	
-returning:
-	free(pieces);
-	return score;
+         if (freeme == 1) {
+             if (prev == NULL) {
+                 bin->normals = bin->normals->next;
+                 free(posn);
+             } else {
+                 prev->next = posn->next;
+                 free(posn);
+             }
+             freeme = 0;
+             posn = prev->next;
+         } else {
+             prev = posn;   
+             posn = posn->next;
+         }
+     }
 }
+     
 
 // Check the normal positions in the bin and eliminate any invalid ones.
 // Invalid positions are:
@@ -1203,6 +1086,11 @@ int HtouchPerim(int  n, int **w, int *W, int **x, int *b, int maxb)
 		curr->next = ll_new(i);
 		curr = curr->next;
 	}
+	
+	/* reset piece placement */
+	for (i = 0; i < n; i++) {
+        b[n] = x[0][n] = x[1][n] = -1;
+    }
 
 	/* Place pieces in order */
 	for (i = 0; i < n; i ++) {
@@ -1217,6 +1105,7 @@ int HtouchPerim(int  n, int **w, int *W, int **x, int *b, int maxb)
 
 			/* Check each normal position in bin */
 			while (posn != NULL) {
+printf("CHECK %3d in bin %d at %5d,%5d:", i, j, posn->x, posn->y);
 				// check horizontal score
 				//score[1] = CheckPlace(posn, W, w, order[i], curr, n, b, x);
                 score[1] = CheckPlace2D(n, w, W, x, b, order[i], posn, j);
@@ -1237,6 +1126,7 @@ int HtouchPerim(int  n, int **w, int *W, int **x, int *b, int maxb)
 				w[0][order[i]] = l;
 				//score[2] = CheckPlace(posn, W, w, order[i], curr, n, b, x);
                 score[2] = CheckPlace2D(n, w, W, x, b, order[i], posn, j);
+printf(" %5d, %5d\n", score[1], score[2]);
 				if (score[2] > score[0]) {
 					best = j;
 					bestx = posn->x;
@@ -1301,7 +1191,8 @@ int HtouchPerim(int  n, int **w, int *W, int **x, int *b, int maxb)
 			// add new normal on top
 			ll_add(bestx, besty + bestwy, order[i], bestx, besty, curr);
 			// need to check normals to eliminate duds
-			CheckNormals(curr, W, w);
+			// CheckNormals(curr, W, w);
+			CheckNormals2D(curr, W, w, b, x, n);
 		}
 	}
 
