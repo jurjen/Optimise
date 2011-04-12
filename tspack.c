@@ -896,7 +896,6 @@ void ll_free(llhead* llh)
     py1 = posn->y;
     py2 = posn->y + w[1][item];
 
-printf("  CHK %3d in %3d at %5d,%5d - %5d,%5d\n", item, bin, px1, py1, px2, py2);
     // check for out-of-bounds
     if ((px2 > W[0]) || (py2 > W[1])) return -1;
     
@@ -916,7 +915,6 @@ printf("  CHK %3d in %3d at %5d,%5d - %5d,%5d\n", item, bin, px1, py1, px2, py2)
         bx2 = x[0][i] + w[0][i];
         by1 = x[1][i];
         by2 = x[1][i] + w[1][i];
-printf("      VS %3d in %3d at %5d,%5d - %5d,%5d\n", i, b[i], bx1, by1, bx2, by2);        
         
         if (bx2 < px1) continue;                    // no overlap possible
         if (by2 < py1) continue;
@@ -936,11 +934,9 @@ printf("      VS %3d in %3d at %5d,%5d - %5d,%5d\n", i, b[i], bx1, by1, bx2, by2
                 score += (px2 < bx2) ? w[0][i]     : (px2 - bx1); // (bx2 - bx1);
             }
         } else {
-printf("          CLASH!!!!\n");
             return -1;
         }
     }
-printf("    SCORE: %5d\n", score);
     return score;
  }
  
