@@ -46,7 +46,7 @@ int TSpack(int d,    int n,   int **w, int *W, int lb, float TL,
 	int    nb, i, j, toReturn;
 	int    dv, K, D, t;
 	int    nIT = 0;
-    float  st, et, tt;
+    float  st, et, tt, yld, pc;
 #if DEBUG
     FILE   *debug;
     int error;
@@ -76,6 +76,17 @@ int TSpack(int d,    int n,   int **w, int *W, int lb, float TL,
 
 	/* incumbent solution */
 	nb = heur(d, n, w, W, x, b, uheur);
+	yld = 0.0;
+	
+	for (i = 0; i < n; i++) {
+        pc = (float) w[0][i] / (float) W[0];
+        for (j = 1; j < d; j++) 
+            pc = pc * (float) w[j][i] / (float) W[j];
+        
+        yld = yld + pc;
+    }
+    yld = yld * 100.0;
+    
 	*ub0 = nb;
 	if ((nb < lb) || (nb < 1)) {
 	   toReturn = -1;
@@ -86,7 +97,7 @@ int TSpack(int d,    int n,   int **w, int *W, int lb, float TL,
 	   goto end;
 	}
 #if DEBUG
-    printf("Starting with %d bins.\n", nb);
+    printf("Starting with %d sheets (%2.2f%% yield).\n\n", nb, yld / (float) nb);
 
     debug = fopen("debug-1.out", "w");
     fprintf (debug, "\nDEBUG: cnb %d < nb %d, iter %d \n", cnb, nb, nIT);
@@ -132,9 +143,9 @@ int TSpack(int d,    int n,   int **w, int *W, int lb, float TL,
 	      /* internal loop */
 	      while (!dv && (nb > lb) && (K < cnb) && (tt < TL) && (nIT < maxIter)) {
 	            int Kin = K, _cnb = cnb, flagNewTarget = 0;
-
+if (KEY_USED(0x51)) goto end;
 	            nIT++;
-	            printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b %3d bins (%5d)", nb, nIT);
+	            printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b %3d bins @ %2.2f%% (%5d)", nb, yld / (float) nb, nIT);
 	            cnb = search(t, &K, &dv, cnb, d, n, cw, W, cx, cb, ff, TL-tt, uheur);
                 
 	            if (CHECK) {
@@ -318,7 +329,7 @@ int search(
 	int    sn, snb, tn, tnb, bnb;
 
 	float  st, et;
-	double pBest = INFINITE;
+	double pBest = T_INFINITE;
 
 	int    **sw, **sx, *sb;
 	int    **tw, **tx, *tb;
@@ -425,7 +436,7 @@ int search(
 
 	          /* case: A(S) <= K */
 	          if (snb <= *K) {
-	             double pK = INFINITE;
+	             double pK = T_INFINITE;
 
 	             nnb = nb - (*K) + snb;
 	             for (j = 0; j < n; j++) if ((b[j] == t) && (j != item)) break;
@@ -573,7 +584,7 @@ int search(
 	    if (exit) break;
 	}
 
-	if ((INFINITE - pBest) > EPS) {
+	if ((T_INFINITE - pBest) > EPS) {
 	   for (j = 0; j < n; j++) {
  	       b[j] = bb[j];
  	       for (k = 0; k < d; k++) {
@@ -1336,7 +1347,7 @@ int target(int D, double *ff, int n)
 
 	tb[0] = 0; c[0] = ff[0];
 	for (k = 1; k < D; k++) {
-	    c[k] = INFINITE;
+	    c[k] = T_INFINITE;
 	    tb[k] = 0;
 	}
 

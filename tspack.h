@@ -5,6 +5,11 @@
 #include <stddef.h>
 #include <time.h>
 #include <assert.h>
+#include <windows.h>        // for GetAsyncKeyState
+
+#define KEY_DOWN(vk_code)   ((GetAsyncKeyState(vk_code) & 0x8000) ? 1 : 0)
+#define KEY_UP(vk_code)     ((GetAsyncKeyState(vk_code) & 0x8000) ? 0 : 1)
+#define KEY_USED(vk_code)   ((GetAsyncKeyState(vk_code) & 0x8001) ? 1 : 0)
 
 #define DEBUG      0
 
@@ -31,8 +36,8 @@
 #define whichL 1              /* select the LOWER BOUNDING procedure */
 
 /* constants */
-#define INFINITE 1000000000.  /* an infinite value, machine dependent */
-#define EPS      0.00001      /* a very small value                   */
+#define T_INFINITE 1000000000.  /* an infinite value, machine dependent */
+#define EPS        0.00001      /* a very small value                   */
 
 /* general TS structures */
 double **tl;                  /* tabu lists                       */

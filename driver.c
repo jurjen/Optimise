@@ -107,11 +107,13 @@ int main(int argc, char **argv)
        if (n > 50) iterLimit = 6.0 * (float) n;
     }
 	
-    printf("\n Solving %dD problem with %d pieces...\n",d, n);
+    printf("\n Solving %dD problem with %d pieces.\n",d, n);
+    printf(" Will do %d iterations, press 'Q' to exit early.\n", iterLimit);
+    
 
 	/* compute an initial lower bound for the instance */
 	lb = lower(d, n, w, W);
-    printf(" OK, lower bound is %d bins of %d x %d\n", lb, W[0], W[1]);
+    printf(" Minimum is %d sheets of %d x %d\n", lb, W[0], W[1]);
 
 	/* compute the TS solution */
 	ub = TSpack(d, n, w, W, lb, timeLimit, &ub0, x, b, uh, iterLimit);
