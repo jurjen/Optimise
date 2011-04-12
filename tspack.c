@@ -821,15 +821,15 @@ llhead* ll_new(int bin)
 	normals = (llint*)calloc(1, sizeof(llint));
 	normals->x = 0;
 	normals->y = 0;
-	normals->p = -1;			// piece identifier
-	normals->px = -1;
-	normals->py = -1;
+//	normals->p = -1;			// piece identifier
+//	normals->px = -1;
+//	normals->py = -1;
 	normals->next = NULL;
 
 	node = (llhead*)calloc(1, sizeof(llhead));
 	node->bin = bin;			// bin identifier
 	node->normals = normals;
-	node->count = 0;
+//	node->count = 0;
 	node->next = NULL;
 
 	return node;
@@ -844,9 +844,9 @@ void ll_add(int nx, int ny, int ref, int rx, int ry, llhead* list)
 	
 	node->x = nx;
 	node->y = ny;
-	node->p = ref;
-	node->px = rx;
-	node->py = ry;
+//	node->p = ref;
+//	node->px = rx;
+//	node->py = ry;
 
 	// add to the tail of the list
 	posn = list->normals;
@@ -952,6 +952,10 @@ void ll_free(llhead* llh)
  }
  
  
+// Check the normal positions in the bin and eliminate any invalid ones.
+// Invalid positions are:
+//    1) outside the bin edges
+//    2) inside another piece
 void CheckNormals2D(llhead *bin, int *W, int **w, int *b, int **x, int n) {
      llint *posn, *prev;
      int i, freeme;
@@ -1004,56 +1008,6 @@ void CheckNormals2D(llhead *bin, int *W, int **w, int *b, int **x, int n) {
 }
      
 
-// Check the normal positions in the bin and eliminate any invalid ones.
-// Invalid positions are:
-//    1) outside the bin edges
-//    2) inside another piece
-void CheckNormals(llhead *bin, int *W, int**w) {
-	llint *posn, *tmp, *prev, *next, *chk;
-	int freeme;
-
-	posn = bin->normals;
-	prev = NULL;
-	freeme = 0;
-	while (posn != NULL) {
-		next = posn->next;
-		if ((posn->x >= W[0]) || (posn->y >= W[1])) {
-			if (posn == bin->normals) bin->normals = bin->normals->next;
-			freeme = 1;
-		}
-		if (freeme) {
-			if (prev != NULL) prev->next = posn->next;
-			free(posn);
-			freeme = 0;
-		} else prev = posn;
-		posn = next;
-	}
-
-	posn = bin->normals;
-	prev = NULL;
-	while (posn != NULL) {
-		tmp = posn->next;
-		// Check if normal is within any placed items
-		chk = bin->normals;
-		while (chk != NULL) {
-			next = chk->next;
-			if ((chk != posn) && (posn->x >= chk->px) && (posn->x < (chk->px + w[0][chk->p]))) {
-				if ((posn->y >= chk->py) && (posn->y < (chk->py + w[1][chk->p]))) {
-					if (posn == bin->normals) bin->normals = bin->normals->next;
-					freeme = 1;
-					next = NULL;
-				}
-			}
-			chk = next;
-		}
-		if (freeme) {
-			if (prev != NULL) prev->next = posn->next;
-			free(posn);
-			freeme = 0;
-		} else prev = posn;
-		posn = tmp;
-	}
-}
 
 /** Touching perimeter heuristic for 2D bin packing.
 	1. Sort items by non-increasing area and horizontally orient them
@@ -1119,7 +1073,6 @@ int HtouchPerim(int  n, int **w, int *W, int **x, int *b, int maxb)
 			/* Check each normal position in bin */
 			while (posn != NULL) {
 				// check horizontal score
-				//score[1] = CheckPlace(posn, W, w, order[i], curr, n, b, x);
                 score[1] = CheckPlace2D(n, w, W, x, b, order[i], posn, j);
 				if (score[1] > score[0]) {
 					best = j;
@@ -1136,7 +1089,6 @@ int HtouchPerim(int  n, int **w, int *W, int **x, int *b, int maxb)
 				l = w[1][order[i]];
 				w[1][order[i]] = w[0][order[i]];
 				w[0][order[i]] = l;
-				//score[2] = CheckPlace(posn, W, w, order[i], curr, n, b, x);
                 score[2] = CheckPlace2D(n, w, W, x, b, order[i], posn, j);
 				if (score[2] > score[0]) {
 					best = j;
@@ -1172,10 +1124,6 @@ int HtouchPerim(int  n, int **w, int *W, int **x, int *b, int maxb)
 			// update current normal
 			curr->normals->x = w[0][order[i]];
 			curr->normals->y = 0;
-			curr->normals->p = order[i];
-			curr->normals->px = 0;
-			curr->normals->py = 0;
-			curr->count++;
 			// add new normal on top
 			ll_add(0, w[1][order[i]], order[i], 0, 0, curr);
 
@@ -1192,17 +1140,12 @@ int HtouchPerim(int  n, int **w, int *W, int **x, int *b, int maxb)
 			w[1][order[i]] = bestwy;
 			b[order[i]] = best;
 			curr = bestb;
-			curr->count++;
 			// update normals
 			bestn->x += bestwx;
 			//bestn->y stays the same
-			bestn->p = order[i];
-			bestn->px = bestx;
-			bestn->py = besty;
 			// add new normal on top
 			ll_add(bestx, besty + bestwy, order[i], bestx, besty, curr);
 			// need to check normals to eliminate duds
-			//CheckNormals(curr, W, w);
 			CheckNormals2D(curr, W, w, b, x, n);
 		}
 	}

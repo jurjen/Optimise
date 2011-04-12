@@ -48,15 +48,11 @@ int    *lm;                   /* last move executed for each list */
 typedef struct lli {
 	int x;
 	int y;
-	int p;
-	int px;
-	int py;
 	struct lli* next;
 } llint;
 
 typedef struct llh {
 	int bin;
-	int count;
 	llint* normals;
 	struct llh* next;
 } llhead;
