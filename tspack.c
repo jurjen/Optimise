@@ -895,7 +895,8 @@ void ll_free(llhead* llh)
     px2 = posn->x + w[0][item];
     py1 = posn->y;
     py2 = posn->y + w[1][item];
-    
+
+printf("  CHK %3d in %3d at %5d,%5d - %5d,%5d\n", item, bin, px1, py1, px2, py2);
     // check for out-of-bounds
     if ((px2 > W[0]) || (py2 > W[1])) return -1;
     
@@ -911,11 +912,11 @@ void ll_free(llhead* llh)
     for (i = 0; i < n; i++) {
         if (b[i] != bin) continue;                  // not in the same bin
         if (i == item) continue;                    // don't check against self
-        
         bx1 = x[0][i];
         bx2 = x[0][i] + w[0][i];
         by1 = x[1][i];
         by2 = x[1][i] + w[1][i];
+printf("      VS %3d in %3d at %5d,%5d - %5d,%5d\n", i, b[i], bx1, by1, bx2, by2);        
         
         if (bx2 < px1) continue;                    // no overlap possible
         if (by2 < py1) continue;
@@ -935,9 +936,11 @@ void ll_free(llhead* llh)
                 score += (px2 < bx2) ? w[0][i]     : (px2 - bx1); // (bx2 - bx1);
             }
         } else {
+printf("          CLASH!!!!\n");
             return -1;
         }
     }
+printf("    SCORE: %5d\n", score);
     return score;
  }
  
@@ -1080,7 +1083,7 @@ int HtouchPerim(int  n, int **w, int *W, int **x, int *b, int maxb)
 	/* Calculate lower bound on number of bins to use */
 	bins = lower(2, n, w, W);
 
-	/* initialise normals */
+	/* initialise normals for initial bins */
 	curr = normals = ll_new(0);
 	for (i = 1; i < bins; i++) {
 		curr->next = ll_new(i);
@@ -1089,7 +1092,7 @@ int HtouchPerim(int  n, int **w, int *W, int **x, int *b, int maxb)
 	
 	/* reset piece placement */
 	for (i = 0; i < n; i++) {
-        b[n] = x[0][n] = x[1][n] = -1;
+        b[i] = x[0][i] = x[1][i] = -1;
     }
 
 	/* Place pieces in order */
@@ -1105,7 +1108,6 @@ int HtouchPerim(int  n, int **w, int *W, int **x, int *b, int maxb)
 
 			/* Check each normal position in bin */
 			while (posn != NULL) {
-printf("CHECK %3d in bin %d at %5d,%5d:", i, j, posn->x, posn->y);
 				// check horizontal score
 				//score[1] = CheckPlace(posn, W, w, order[i], curr, n, b, x);
                 score[1] = CheckPlace2D(n, w, W, x, b, order[i], posn, j);
@@ -1126,7 +1128,6 @@ printf("CHECK %3d in bin %d at %5d,%5d:", i, j, posn->x, posn->y);
 				w[0][order[i]] = l;
 				//score[2] = CheckPlace(posn, W, w, order[i], curr, n, b, x);
                 score[2] = CheckPlace2D(n, w, W, x, b, order[i], posn, j);
-printf(" %5d, %5d\n", score[1], score[2]);
 				if (score[2] > score[0]) {
 					best = j;
 					bestx = posn->x;
@@ -1191,8 +1192,8 @@ printf(" %5d, %5d\n", score[1], score[2]);
 			// add new normal on top
 			ll_add(bestx, besty + bestwy, order[i], bestx, besty, curr);
 			// need to check normals to eliminate duds
-			// CheckNormals(curr, W, w);
-			CheckNormals2D(curr, W, w, b, x, n);
+			CheckNormals(curr, W, w);
+			//CheckNormals2D(curr, W, w, b, x, n);
 		}
 	}
 
