@@ -32,6 +32,7 @@ int main(int argc, char **argv)
 	sscanf(argv[1], "%s", fname);
     timeLimit = 300;
     iterLimit = nITmax;
+    uh = 1;
 	if (argc < 3) {
         printf("\n Allowing part rotation\n");
     } else {
@@ -39,7 +40,7 @@ int main(int argc, char **argv)
 	    if (argc > 3) {
             sscanf(argv[3], "%s", resultsFile);
             if (argc > 4) {
-               sscanf(argv[4], "%d", &timeLimit);
+               sscanf(argv[4], "%f", &timeLimit);
             }       
         }
     }
@@ -108,7 +109,7 @@ int main(int argc, char **argv)
     }
 	
     printf("\n Solving %dD problem with %d pieces.\n",d, n);
-    printf(" Will do %d iterations, press 'Q' to exit early.\n", iterLimit);
+    printf(" Up to %d attempts in %.0f seconds\n\n Press 'Q' to exit early.\n\n\n", iterLimit, timeLimit);
     
 
 	/* compute an initial lower bound for the instance */
@@ -164,6 +165,8 @@ int main(int argc, char **argv)
             fclose(file);
         }
     }
+    printf("\n PRESS ANY KEY TO EXIT... \n");
+    getch();
 
 	/* memory de-allocation */
 	for (i = 0; i < d; i++) {

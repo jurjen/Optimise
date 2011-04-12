@@ -47,10 +47,6 @@ int TSpack(int d,    int n,   int **w, int *W, int lb, float TL,
 	int    dv, K, D, t;
 	int    nIT = 0;
     float  st, et, tt, yld, pc;
-#if DEBUG
-    FILE   *debug;
-    int error;
-#endif
 
 	int    **cw, **cx, *cb, cnb;
 	double *ff;
@@ -96,30 +92,6 @@ int TSpack(int d,    int n,   int **w, int *W, int lb, float TL,
 	   toReturn = nb;
 	   goto end;
 	}
-#if DEBUG
-    printf("Starting with %d sheets (%2.2f%% yield).\n\n", nb, yld / (float) nb);
-
-    debug = fopen("debug-1.out", "w");
-    fprintf (debug, "\nDEBUG: cnb %d < nb %d, iter %d \n", cnb, nb, nIT);
-    
-    for (i = 0; i < n; i++) {
-       fprintf (debug, "part: %d, x: %d, y: %d, wx: %d, wy: %d, b: %d\n", i, x[0][i], x[1][i], w[0][i], w[1][i], b[i]);
-       if ((x[0][i] + w[0][i]) > W[0]) fprintf(debug, "   --> ERROR: x+wx > X: %d + %d = %d > %d\n\n", x[0][i], w[0][i], x[0][i] + w[0][i], W[0]);
-       if ((x[1][i] + w[1][i]) > W[1]) fprintf(debug, "   --> ERROR: y+wy > Y: %d + %d = %d > %d\n\n", x[1][i], w[1][i], x[1][i] + w[1][i], W[1]);
-    }
-    fclose(debug);
-
-    debug = fopen("debug-2.out", "w");
-    fprintf (debug, "\nDEBUG: cnb %d < nb %d, iter %d \n", cnb, nb, nIT);
-    for (i = 0; i < nb; i++) {
-        fprintf(debug, "\n\nLAYOUT: %03d\n===========\n", i);
-        for (j = 0; j < n; j++) {
-            if (b[j] == i) fprintf(debug, "  part: %6d, (%6d, %6d) - (%6d, %6d)\n", 
-                                      j + 1, x[0][j], x[1][j], x[0][j] + w[0][j], x[1][j] + w[1][j]);
-        }
-    }
-    fclose(debug);
-#endif
 
 	/* initial (trivial) solution - 1 item in 1 bin */
 	cnb = n;
@@ -132,6 +104,7 @@ int TSpack(int d,    int n,   int **w, int *W, int lb, float TL,
 	}
 
 	second(&st);
+
 	/* external loop */
 	D = 1; tt = 0.0;
 	while ((tt < TL) && (nIT < maxIter)) {
@@ -143,49 +116,17 @@ int TSpack(int d,    int n,   int **w, int *W, int lb, float TL,
 	      /* internal loop */
 	      while (!dv && (nb > lb) && (K < cnb) && (tt < TL) && (nIT < maxIter)) {
 	            int Kin = K, _cnb = cnb, flagNewTarget = 0;
-if (KEY_USED(0x51)) goto end;
+                
+                if (KEY_USED(0x51)) goto end;          // Check for 'Q' key press
 	            nIT++;
 	            printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b %3d bins @ %2.2f%% (%5d)", nb, yld / (float) nb, nIT);
 	            cnb = search(t, &K, &dv, cnb, d, n, cw, W, cx, cb, ff, TL-tt, uheur);
                 
 	            if (CHECK) {
 	               int correct;
-#if DEBUG
-    debug = fopen("debug-1.out", "a");
-    fprintf (debug, "\nDEBUG: cnb %d < nb %d, iter %d \n", cnb, nb, nIT);
-    for (i = 0; i < n; i++) {
-       fprintf (debug, "part: %d, x: %d, y: %d, wx: %d, wy: %d, b: %d\n", i, x[0][i], x[1][i], w[0][i], w[1][i], b[i]);
-       if ((x[0][i] + w[0][i]) > W[0]) fprintf(debug, "   --> ERROR: x+wx > X: %d + %d = %d > %d\n\n", x[0][i], w[0][i], x[0][i] + w[0][i], W[0]);
-       if ((x[1][i] + w[1][i]) > W[1]) fprintf(debug, "   --> ERROR: y+wy > Y: %d + %d = %d > %d\n\n", x[1][i], w[1][i], x[1][i] + w[1][i], W[1]);
-    }
-    fclose(debug);
-
-    debug = fopen("debug-2.out", "a");
-    fprintf (debug, "\nDEBUG: cnb %d < nb %d, iter %d \n", cnb, nb, nIT);
-    for (i = 0; i < nb; i++) {
-        fprintf(debug, "\n\nLAYOUT: %03d\n===========\n", i);
-        for (j = 0; j < n; j++) {
-            if (b[j] == i) fprintf(debug, "  part: %6d, (%6d, %6d) - (%6d, %6d)\n", 
-                                      j + 1, x[0][j], x[1][j], x[0][j] + w[0][j], x[1][j] + w[1][j]);
-        }
-    }
-    fclose(debug);
-#endif
 	               correct = checkfs(d, n, w, W, x, b);
 	               if (!correct) {
 	                  printf("\n the intermediate solution is not feasible!\n");
-
-#if DEBUG
-                      debug = fopen("debug-3.out", "w");
-                      fprintf (debug, "\nDEBUG: cnb %d < nb %d, iter %d \n", cnb, nb, nIT);
-
-                      for (i = 0; i < n; i++) {
-                           fprintf (debug, "part: %d, x: %d, y: %d, wx: %d, wy: %d, b: %d\n", i, x[0][i], x[1][i], w[0][i], w[1][i], b[i]);
-                           if ((x[0][i] + w[0][i]) > W[0]) fprintf(debug, "   --> ERROR: x+wx > X: %d + %d = %d > %d\n\n", x[0][i], w[0][i], x[0][i] + w[0][i], W[0]);
-                           if ((x[1][i] + w[1][i]) > W[1]) fprintf(debug, "   --> ERROR: y+wy > Y: %d + %d = %d > %d\n\n", x[1][i], w[1][i], x[1][i] + w[1][i], W[1]);
-                      }
-                      fclose(debug);
-#endif	               
 	                  exit(0);
 	               }
 	            }
@@ -197,29 +138,7 @@ if (KEY_USED(0x51)) goto end;
 	            }
 
 	            if (cnb < nb) {
-                        // need to check whether it actually is OK...
-#if DEBUG
-                      printf(" Now at %d bins... (iter %d, %d, %d)\n", cnb, nIT, K, dv);
-    debug = fopen("debug-0.out", "w");
-    fprintf (debug, "\nDEBUG: cnb %d, nb %d, iter %d \n", cnb, nb, nIT);
-    for (i = 0; i < nb; i++) {
-        fprintf(debug, "\n\nLAYOUT: %03d\n===========\n", i);
-        for (j = 0; j < n; j++) {
-            if (b[j] == i) fprintf(debug, "  part: %6d, (%6d, %6d) - (%6d, %6d)\n", 
-                                      j + 1, x[0][j], x[1][j], x[0][j] + w[0][j], x[1][j] + w[1][j]);
-        }
-    }
-    fclose(debug);
-                      debug = fopen("debug-4.out", "a");
-                      fprintf (debug, "DEBUG: cnb %d < nb %d, iter %d \n", cnb, nb, nIT);
-
-                      for (i = 0; i < n; i++) {
-                           if ((x[0][i] + w[0][i]) > W[0]) fprintf(debug, "   --> ERROR: x+wx > X: %d + %d = %d > %d\n\n", x[0][i], w[0][i], x[0][i] + w[0][i], W[0]);
-                           if ((x[1][i] + w[1][i]) > W[1]) fprintf(debug, "   --> ERROR: y+wy > Y: %d + %d = %d > %d\n\n", x[1][i], w[1][i], x[1][i] + w[1][i], W[1]);
-                      }
-                      fclose(debug);
-
-#endif	               
+                   // need to check whether it actually is OK...
 	               second(&et);
 	               nCC = 0;
 	               D = K = flagNewTarget = 1;
@@ -575,7 +494,6 @@ int search(
 	          }
 	          second(&et);
 	          if (et - st > timeLeft) {
-                     printf("\n Run out of time!\n");
                      exit = 1;
               } else {
                      next = nextKT(kb, *K, t, nb);
@@ -821,15 +739,11 @@ llhead* ll_new(int bin)
 	normals = (llint*)calloc(1, sizeof(llint));
 	normals->x = 0;
 	normals->y = 0;
-//	normals->p = -1;			// piece identifier
-//	normals->px = -1;
-//	normals->py = -1;
 	normals->next = NULL;
 
 	node = (llhead*)calloc(1, sizeof(llhead));
 	node->bin = bin;			// bin identifier
 	node->normals = normals;
-//	node->count = 0;
 	node->next = NULL;
 
 	return node;
@@ -844,9 +758,6 @@ void ll_add(int nx, int ny, int ref, int rx, int ry, llhead* list)
 	
 	node->x = nx;
 	node->y = ny;
-//	node->p = ref;
-//	node->px = rx;
-//	node->py = ry;
 
 	// add to the tail of the list
 	posn = list->normals;
@@ -1321,9 +1232,6 @@ int checkfs(int d, int n, int **w, int *W, int **x, int *b)
             // Check for out-of-box
             for (j = 0; j < d; j++) {
                 if (x[j][i]+w[j][i] > W[j]) {
-#if DEBUG
-                    printf(" ERR: item %d over edge (%d %d %d %d = %d %d)\n", i, x[0][i], x[1][i], w[0][i], w[1][i], x[0][i]+w[0][i], w[1][i]+x[1][i]);
-#endif
                     return 0;
                 }
             }
@@ -1334,17 +1242,6 @@ int checkfs(int d, int n, int **w, int *W, int **x, int *b)
                    if (intsz(x[k][i], x[k][i]+w[k][i], x[k][j], x[k][j]+w[k][j])) count++;
                 }
                 if (count == d) {
-#if DEBUG
-                    printf("\n ERR: count = d\n");
-                    printf("   item %3d in bin %3d (%5d, %5d) - (%5d, %5d) : %d x %d)\n", i, b[i], x[0][i], x[1][i], x[0][i]+w[0][i], x[1][i]+w[1][i], w[0][i], w[1][i]);
-                    printf("\n BIN %d:\n", b[i]);
-                    for (k = 0; k < n; k++) {
-                        if (b[k] == b[i]) {
-                           printf("   item %3d in bin %3d (%5d, %5d) - (%5d, %5d) : %d x %d)\n", k, b[k], x[0][k], x[1][k], x[0][k]+w[0][k], x[1][k]+w[1][k], w[0][k], w[1][k]);
-                        }
-                    }
-#endif  
-                    
                     return 0;
                 }
             }
@@ -1414,7 +1311,7 @@ void sortByArea(int n, int **v, int *o, int rotate)
 
 void second(float *tempo)
 {
-	*tempo = 0.0;
+	*tempo = (float) (clock() / CLOCKS_PER_SEC);
 }
 
 /* THE END */

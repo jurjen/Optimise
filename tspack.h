@@ -11,8 +11,6 @@
 #define KEY_UP(vk_code)     ((GetAsyncKeyState(vk_code) & 0x8000) ? 0 : 1)
 #define KEY_USED(vk_code)   ((GetAsyncKeyState(vk_code) & 0x8001) ? 1 : 0)
 
-#define DEBUG      0
-
 #define CHECK      1
 
 /* macros */
