@@ -5,7 +5,7 @@ int main(int argc, char **argv)
 {                                           /* driver program for the TSPACK code */
 	int    i, j, value, correct;
 	int    d, n, lb, ub0, ub;
-	float  yield;
+	float  yield, piece;
 	float  timeLimit;
 	int    iterLimit;
 	char   fname[80];
@@ -30,22 +30,28 @@ int main(int argc, char **argv)
 	}
 
 	sscanf(argv[1], "%s", fname);
-    timeLimit = 300;
     iterLimit = nITmax;
-    uh = 1;
 	if (argc < 3) {
-        printf("\n Allowing part rotation\n");
+        uh = 1;
     } else {
 	    sscanf(argv[2], "%d", &uh);
-	    if (argc > 3) {
-            sscanf(argv[3], "%s", resultsFile);
-            if (argc > 4) {
-               sscanf(argv[4], "%f", &timeLimit);
-            }       
-        }
+    }
+    if (argc > 3) {
+        sscanf(argv[3], "%s", resultsFile);
+    } else {
+        sscanf(argv[1], "%s", resultsFile);
+        textline = strrchr(resultsFile, '.');
+        if (textline) *textline = 0;
+        sprintf(resultsFile, "%s.out", resultsFile);
+    }
+    if (argc > 4) {
+       sscanf(argv[4], "%f", &timeLimit);
+    } else {
+       timeLimit = 120;
     }
 
 	file = fopen(fname, "r");
+	printf("\nReading data from file %s...\n", fname);
 	
 	if (fgetc(file) == '[') {
         // it has headers
@@ -83,12 +89,16 @@ int main(int argc, char **argv)
     	    W[i] = value;
     	}
     	/* get the item dimensions */
+    	yield = 0;
     	for (i = 0; i < n; i++) {
+            piece = 1.0;
     	    for (j = 0; j < d; j++) {
     	        fscanf(file, "%d", &value);
     	        w[j][i] = value;
+    	        piece = piece * (float) w[j][i] / (float) W[j];
     	    }
     	    
+    	    yield = yield + piece;
     	    /* get item descriptor, if any */
     	    textline = fgets(textline, 120, file);
     	    for (j = 0; j < 20; j++) {
@@ -108,21 +118,20 @@ int main(int argc, char **argv)
        if (n > 50) iterLimit = 6.0 * (float) n;
     }
 	
-    printf("\n Solving %dD problem with %d pieces.\n",d, n);
+    printf("\n Solving %dD problem with %d pieces %s rotation.\n",d, n, uh ? "with" : "without");
     printf(" Up to %d attempts in %.0f seconds\n\n Press 'Q' to exit early.\n\n\n", iterLimit, timeLimit);
     
 
 	/* compute an initial lower bound for the instance */
 	lb = lower(d, n, w, W);
-    printf(" Minimum is %d sheets of %d x %d\n", lb, W[0], W[1]);
+    printf(" Minimum is %d sheets of %d x %d (%2.2f%% yield)\n", lb, W[0], W[1], yield * 100 / (float) lb);
 
 	/* compute the TS solution */
 	ub = TSpack(d, n, w, W, lb, timeLimit, &ub0, x, b, uh, iterLimit);
 	if (ub <= 0) {
 	   printf("\n an error occurred in procedure TSpack!\n");
 	   exit(0);
-	} else
-	  printf("\n Done, now checking results... \n");
+	}
 
 	/* check the correctnes of the solution */
 	correct = checkfs(d, n, w, W, x, b);
@@ -132,10 +141,7 @@ int main(int argc, char **argv)
 	}
 
 	/* print the solution value */
-	printf(" LB = %4d iUB = %4d fUB = %4d\n", lb, ub0, ub);
-    printf("\n\n---\n%d sheets required\n", ub);
-    
-    if (argc > 3) {
+    if (strlen(fname) > 3) {
         file = fopen(resultsFile, "w");
         fprintf(file, "%d sheets of %d x %d required\n", ub, W[0], W[1]);
         timeLimit = 0;
@@ -153,18 +159,14 @@ int main(int argc, char **argv)
             }
             yield = yield * 100 / (((float) W[0]) * ((float) W[1]));
             timeLimit += yield;
-            fprintf(file, "\n %i items, YIELD: %2.2f%\n", value, yield);
+            fprintf(file, "\n %i items, YIELD: %2.2f%%\n", value, yield);
         }
         timeLimit = timeLimit / (float) ub;
-        fprintf(file, "\n\n=====\nTOTAL %d pieces on %d sheets, average yield %2.2f\n", n, ub, timeLimit);
+        fprintf(file, "\n\n=====\nTOTAL %d pieces on %d sheets, average yield %2.2f%%\n", n, ub, timeLimit);
         fclose(file);
-    } else {
-        file = fopen(fname, "a");
-    	if (file != NULL) {
-            fprintf( file, "\n\n---\n%d sheets required\n", ub);
-            fclose(file);
-        }
     }
+    printf("\n\n=====\nTOTAL %d pieces on %d sheets, average yield %2.2f%%\n", n, ub, timeLimit);
+    printf("Results saved to %s\n", resultsFile);
     printf("\n PRESS ANY KEY TO EXIT... \n");
     getch();
 

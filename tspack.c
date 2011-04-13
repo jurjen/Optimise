@@ -117,9 +117,14 @@ int TSpack(int d,    int n,   int **w, int *W, int lb, float TL,
 	      while (!dv && (nb > lb) && (K < cnb) && (tt < TL) && (nIT < maxIter)) {
 	            int Kin = K, _cnb = cnb, flagNewTarget = 0;
                 
-                if (KEY_USED(0x51)) goto end;          // Check for 'Q' key press
+                if (KEY_USED(0x51)) {    // Check for 'Q' key press...
+                   getch();              // clear buffer so we see summary
+                   toReturn = nb;
+                   goto end;
+                }
 	            nIT++;
-	            printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b %3d bins @ %2.2f%% (%5d)", nb, yld / (float) nb, nIT);
+	            printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+                printf(" %3d bins @ %2.2f%% (%5d, %3.0fs)", nb, yld / (float) nb, nIT, tt);
 	            cnb = search(t, &K, &dv, cnb, d, n, cw, W, cx, cb, ff, TL-tt, uheur);
                 
 	            if (CHECK) {
@@ -401,8 +406,9 @@ int search(
 
 	             /* automatic update of the neighborhood's size */
 	             if ((snb < *K) || kb[t]) *K = ((*K > 1) ? (*K-1) : 1);
-	             toReturn = nnb;
-                     goto end;
+	             
+                 toReturn = nnb;
+                 goto end;
 	          }
 
 	          /* case: A(S) == K+1 */
@@ -476,9 +482,9 @@ int search(
 	                          }
 	                       } else {
 	                          if (s[b[j]] < 0) {
-                                     toReturn = -1;
+                                 toReturn = -1;
 	                             free(tff);
-                                     goto end;
+                                 goto end;
 	                          } else {
 	                             bb[j] = s[b[j]];
 	                             for (k = 0; k < d; k++) {
